@@ -7,7 +7,10 @@ somemodule = SourceFileLoader('lab2_landmarks', join(ROOT, "lab2_landmarks.py"))
 import lab2_landmarks as l2
 import numpy as np
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import cross_val_score
 from sklearn import svm
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
@@ -53,10 +56,47 @@ def log_reg(xTrain, yTrain, xTest, yTest):
     print("Accuracy of logistic regression:", accuracy)
     return accuracy
 
+def random_forest(xTrain, yTrain, xTest, yTest):
+    classifier = RandomForestClassifier(n_estimators=100)
+    classifier.fit(xTrain, yTrain)
+
+    pred = classifier.predict(xTest)
+
+    accuracy = accuracy_score(yTest, pred)
+    print("Accuracy of random forest:", accuracy)
+    return accuracy
+
+def find_best_k(xTrain, yTrain, xTest, yTest):
+    k_range = range(1, 70)
+    k_scores = []
+
+    for k in k_range:
+        classifier = KNeighborsClassifier(n_neighbors=k)
+        classifier.fit(xTrain, yTrain)
+
+        pred = classifier.predict(xTest)
+
+        score = accuracy_score(yTest, pred)
+        k_scores.append(score)
+    
+    best_k = k_scores.index(max(k_scores)) + 1
+    print(best_k)
+    return best_k
+
+
+def knn(xTrain, yTrain, xTest, yTest):
+    classifier = KNeighborsClassifier(n_neighbors = 11)
+    classifier.fit(xTrain, yTrain)
+
+    pred = classifier.predict(xTest)
+
+    accuracy = accuracy_score(yTest, pred)
+    print("Accuracy of KNN:", accuracy)
+
 def img_SVM(training_images, training_labels, test_images, test_labels):
 
     #Create SVM classifier and fit to training data
-    classifier = svm.SVC(kernel='poly')
+    classifier = svm.SVC(kernel='linear')
     classifier.fit(training_images, training_labels)
 
     #Find predictions for test images and calculate accuracy
@@ -87,5 +127,8 @@ tr_Xsel, te_Xsel = feature_selection(tr_X2, tr_Y2, te_X2)
 print(tr_Xsel.shape)
 
 #Find accuracy of each algorithm
+#best_k = find_best_k(tr_Xsel, tr_Y2, te_Xsel, te_Y2)
 log_reg_acc = log_reg(tr_Xsel, tr_Y2, te_Xsel, te_Y2)
+random_forrest_acc = random_forest(tr_Xsel, tr_Y2, te_Xsel, te_Y2)
+knn_acc = knn(tr_Xsel, tr_Y2, te_Xsel, te_Y2)
 SVM_acc=img_SVM(tr_Xsel, tr_Y2, te_Xsel, te_Y2)
