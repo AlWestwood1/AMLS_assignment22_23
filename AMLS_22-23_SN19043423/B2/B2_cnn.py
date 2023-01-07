@@ -4,9 +4,10 @@ import os
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Rescaling
+from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, BatchNormalization
 from keras.callbacks import EarlyStopping
 from pathlib import Path
+import matplotlib.pyplot as plt
 ROOT = Path(__file__).parent.parent #Root directory is the folder this file is placed in
 
 #Directories of datasets
@@ -18,7 +19,7 @@ labels_test = os.path.join(ROOT, 'Datasets/cartoon_set_test/labels.csv')
 #Import image paths and labels from .csv
 def importData(img_dir, labels_dir):
     labels_file = pd.read_csv(os.path.join(ROOT, labels_dir), sep = '\t', engine = 'python', header = 0)
-    face_labels = labels_file['face_shape'].values
+    face_labels = labels_file['eye_color'].values
     img_paths = labels_file['file_name'].values
     for i in range(0, len(img_paths)):
         img_paths[i] = os.path.join(img_dir, img_paths[i])
@@ -41,7 +42,6 @@ def process_path(img_id, label):
 #Initialisze CNN model. This contains 3 convolutional layers with a maxPooling layer after each, then into 3 fully connected layers
 def CNNmodel():
     model = Sequential()
-    model.add(Rescaling(1./255))
     model.add(Conv2D(16, (3,3), 1, activation="relu", input_shape = (100,100,3)))
     model.add(MaxPooling2D((2,2)))
 
@@ -88,11 +88,10 @@ train_ds = train_ds.batch(32)
 val_ds = val_ds.batch(32)
 test_ds = test_ds.batch(32)
 
-
-#Visualise the data and associated labels
-image_batch, label_batch = next(iter(train_ds))
-
 """
+#Visualise the data and associated labels
+image_batch, label_batch = next(iter(test_ds))
+
 plt.figure(figsize=(10, 10))
 for i in range(9):
   ax = plt.subplot(3, 3, i + 1)
@@ -100,7 +99,6 @@ for i in range(9):
   label = label_batch[i]
   plt.title(str(label_batch[i].numpy()))
   plt.axis("off")
-plt.savefig("B1dsExample.png")
 """
 
 #Create callback function to stop training early if network converges (to prevent overfitting)
@@ -120,7 +118,7 @@ plt.plot(history.history['val_accuracy'], label = "Valid")
 plt.xlabel("Epoch")
 plt.ylabel("Accuracy")
 plt.legend()
-plt.savefig("B1Acc.png")
+plt.savefig("B2Acc.png")
 plt.show()
 
 #Test the model on the test dataset

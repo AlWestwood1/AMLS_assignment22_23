@@ -14,6 +14,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import f_classif
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 
 
@@ -30,10 +32,10 @@ def get_data():
 
     return tr_X, tr_Y, te_X, te_Y
 
-def feature_selection(tr_X2, tr_Y2, te_X2):
+def feature_selection(tr_X2, tr_Y2, te_X2, k):
 
     #Select the best K features using the ANOVA F-value
-    sel = SelectKBest(f_classif, k=62)
+    sel = SelectKBest(f_classif, k=k)
 
     #Fit to training data and return
     selected_features = sel.fit(tr_X2, tr_Y2)
@@ -44,6 +46,15 @@ def feature_selection(tr_X2, tr_Y2, te_X2):
     te_Xsel = te_X2[columns_selected]
 
     return tr_Xsel, te_Xsel
+
+def pca(xTrain, xTest, k):
+    pca = PCA(n_components=k)
+
+    xTrain = pca.fit_transform(xTrain)
+    xTest = pca.transform(xTest)
+
+    return xTrain, xTest
+
 
 
 def log_reg(xTrain, yTrain, xTest, yTest):
@@ -92,6 +103,7 @@ def knn(xTrain, yTrain, xTest, yTest):
 
     accuracy = accuracy_score(yTest, pred)
     print("Accuracy of KNN:", accuracy)
+    return accuracy
 
 def img_SVM(training_images, training_labels, test_images, test_labels):
 
@@ -121,14 +133,37 @@ tr_Y2 = list(zip(*tr_Y))[0]
 te_X2 = pd.DataFrame(te_X.reshape((969, 68*2)))
 te_Y2 = list(zip(*te_Y))[0]
 
-#Remove unnecessary features
-tr_Xsel, te_Xsel = feature_selection(tr_X2, tr_Y2, te_X2)
 
-print(tr_Xsel.shape)
+#Remove unnecessary features using SelectKBest (k = 62)
+tr_Xsel, te_Xsel = feature_selection(tr_X2, tr_Y2, te_X2, 62)
 
-#Find accuracy of each algorithm
-#best_k = find_best_k(tr_Xsel, tr_Y2, te_Xsel, te_Y2)
-log_reg_acc = log_reg(tr_Xsel, tr_Y2, te_Xsel, te_Y2)
-random_forrest_acc = random_forest(tr_Xsel, tr_Y2, te_Xsel, te_Y2)
-knn_acc = knn(tr_Xsel, tr_Y2, te_Xsel, te_Y2)
-SVM_acc=img_SVM(tr_Xsel, tr_Y2, te_Xsel, te_Y2)
+
+k_x = []
+log_reg_acc = []
+random_forest_acc = []
+knn_acc = []
+SVM_acc = []
+
+
+for k in range (1, 62):
+    print(k)
+    k_x.append(k)
+
+    tr_Xpca, te_Xpca = pca(tr_Xsel, te_Xsel, k)
+    #Find accuracy of each algorithm
+    #best_k = find_best_k(tr_Xsel, tr_Y2, te_Xsel, te_Y2)
+    log_reg_acc.append(log_reg(tr_Xpca, tr_Y2, te_Xpca, te_Y2))
+    random_forest_acc.append(random_forest(tr_Xpca, tr_Y2, te_Xpca, te_Y2))
+    knn_acc.append(knn(tr_Xpca, tr_Y2, te_Xpca, te_Y2))
+    SVM_acc.append(img_SVM(tr_Xpca, tr_Y2, te_Xpca, te_Y2))
+    print(knn_acc)
+
+plt.plot(k_x, log_reg_acc, label = 'LogReg')
+plt.plot(k_x, random_forest_acc, label = 'RForest')
+plt.plot(k_x, knn_acc, label = 'KNN')
+plt.plot(k_x, SVM_acc, label = 'SVM')
+plt.xlabel("Number of Components")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.savefig("A1PCA.png")
+plt.show()
