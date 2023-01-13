@@ -3,17 +3,17 @@ AMLS ASSIGNMENT
 SN: 19043423
 
 ### REQUIRED PACKAGES ###
-os
-pathlib
-pandas
-importlib
-numpy
-sklearn
-matplotlib
-cv2 (OpenCV)
-dlib
-keras
-tensorflow
+os<br />
+pathlib<br />
+pandas<br />
+importlib<br />
+numpy<br />
+sklearn<br />
+matplotlib<br />
+cv2 (OpenCV)<br />
+dlib<br />
+keras<br />
+tensorflow<br />
 
 Please ensure that these packages are installed prior to running the program
 
