@@ -10,7 +10,7 @@ import B2.B2_cnn as B2
 
 while True:
     try:
-        sel = int(input("Please type the number program you would like to run (-1 to quit):\n 1. A1\n 2. A2\n 3. B1\n 4. B2\n"))
+        sel = int(input("Please type the number of the program you would like to run (-1 to quit):\n 1. A1\n 2. A2\n 3. B1\n 4. B2\n"))
         if sel == -1:
             exit()
 
