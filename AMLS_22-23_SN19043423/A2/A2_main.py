@@ -88,12 +88,11 @@ def find_best_k(xTrain, yTrain, xTest, yTest):
         k_scores.append(score)
     
     best_k = k_scores.index(max(k_scores)) + 1
-    print(best_k)
     return best_k
 
 
-def knn(xTrain, yTrain, xTest, yTest):
-    classifier = KNeighborsClassifier(n_neighbors = 11)
+def knn(xTrain, yTrain, xTest, yTest, best_k):
+    classifier = KNeighborsClassifier(n_neighbors = best_k)
     classifier.fit(xTrain, yTrain)
 
     pred = classifier.predict(xTest)
@@ -119,48 +118,39 @@ def img_SVM(training_images, training_labels, test_images, test_labels):
 
 
 ### MAIN PROGRAM ###
-tr_X, tr_Y, te_X, te_Y= get_data() #get data
+def A2_main():
+    tr_X, tr_Y, te_X, te_Y= get_data() #get data
 
-#print(tr_X.shape)
-#print(te_X.shape)
+    #print(tr_X.shape)
+    #print(te_X.shape)
 
-#Reshape data into correct diminsions (panda dataframe used to make feature selection easier)
-tr_X2 = pd.DataFrame(tr_X.reshape((4795, 68*2)))
-tr_Y2 = list(zip(*tr_Y))[0]
-te_X2 = pd.DataFrame(te_X.reshape((969, 68*2)))
-te_Y2 = list(zip(*te_Y))[0]
+    #Reshape data into correct diminsions (panda dataframe used to make feature selection easier)
+    tr_X2 = pd.DataFrame(tr_X.reshape((4795, 68*2)))
+    tr_Y2 = list(zip(*tr_Y))[0]
+    te_X2 = pd.DataFrame(te_X.reshape((969, 68*2)))
+    te_Y2 = list(zip(*te_Y))[0]
 
-#Remove unnecessary features
-
-
-k_x = []
-log_reg_acc = []
-random_forest_acc = []
-knn_acc = []
-SVM_acc = []
-
-tr_Xsel, te_Xsel = feature_selection(tr_X2, tr_Y2, te_X2, 20)
-
-
-for k in range (1, 20):
-    print(k)
-    k_x.append(k)
-
-    tr_Xpca, te_Xpca = pca(tr_Xsel, te_Xsel, k)
+    #Remove unnecessary features
+    tr_Xsel, te_Xsel = feature_selection(tr_X2, tr_Y2, te_X2, 29)
+    tr_Xpca, te_Xpca = pca(tr_Xsel, te_Xsel, 19)
 
     #Find accuracy of each algorithm
-    #best_k = find_best_k(tr_Xsel, tr_Y2, te_Xsel, te_Y2)
-    log_reg_acc.append(log_reg(tr_Xpca, tr_Y2, te_Xpca, te_Y2))
-    random_forest_acc.append(random_forest(tr_Xpca, tr_Y2, te_Xpca, te_Y2))
-    knn_acc.append(knn(tr_Xpca, tr_Y2, te_Xpca, te_Y2))
-    SVM_acc.append(img_SVM(tr_Xpca, tr_Y2, te_Xpca, te_Y2))
+    best_k = find_best_k(tr_Xpca, tr_Y2, te_Xpca, te_Y2)
+    log_reg_acc = log_reg(tr_Xpca, tr_Y2, te_Xpca, te_Y2)
+    random_forest_acc=random_forest(tr_Xpca, tr_Y2, te_Xpca, te_Y2)
+    knn_acc = knn(tr_Xpca, tr_Y2, te_Xpca, te_Y2, best_k)
+    SVM_acc = img_SVM(tr_Xpca, tr_Y2, te_Xpca, te_Y2)
 
+
+
+"""
 plt.plot(k_x, log_reg_acc, label = 'LogReg')
 plt.plot(k_x, random_forest_acc, label = 'RForest')
 plt.plot(k_x, knn_acc, label = 'KNN')
 plt.plot(k_x, SVM_acc, label = 'SVM')
-plt.xlabel("Number of Components")
+plt.xlabel("Number of components")
 plt.ylabel("Accuracy")
 plt.legend()
 plt.savefig("A2PCA.png")
 plt.show()
+"""

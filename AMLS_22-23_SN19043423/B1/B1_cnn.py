@@ -41,7 +41,6 @@ def process_path(img_id, label):
 #Initialisze CNN model. This contains 3 convolutional layers with a maxPooling layer after each, then into 3 fully connected layers
 def CNNmodel():
     model = Sequential()
-    model.add(Rescaling(1./255))
     model.add(Conv2D(16, (3,3), 1, activation="relu", input_shape = (100,100,3)))
     model.add(MaxPooling2D((2,2)))
 
@@ -61,68 +60,70 @@ def CNNmodel():
 
 
 ### MAIN PROGRAM ###
+def B1_main():
+    #Get training and testing data
+    train_img_paths, train_labels = importData(train_dir, labels_train)
+    test_img_paths, test_labels = importData(test_dir, labels_test)
 
-#Get training and testing data
-train_img_paths, train_labels = importData(train_dir, labels_train)
-test_img_paths, test_labels = importData(test_dir, labels_test)
+    #Create tensorflow datasets from data
+    dataset_train = tf.data.Dataset.from_tensor_slices((train_img_paths, train_labels))
+    dataset_test = tf.data.Dataset.from_tensor_slices((test_img_paths, test_labels))
 
-#Create tensorflow datasets from data
-dataset_train = tf.data.Dataset.from_tensor_slices((train_img_paths, train_labels))
-dataset_test = tf.data.Dataset.from_tensor_slices((test_img_paths, test_labels))
+    #Split training dataset into 80% training and 20% validation data
+    ds_size = len(dataset_train)
+    train_size = int(ds_size * 0.8)
+    Train = dataset_train.take(train_size)
+    Val = dataset_train.skip(train_size)
 
-#Split training dataset into 80% training and 20% validation data
-ds_size = len(dataset_train)
-train_size = int(ds_size * 0.8)
-Train = dataset_train.take(train_size)
-Val = dataset_train.skip(train_size)
+    AUTOTUNE = tf.data.AUTOTUNE #Tunes values dynamically at runtime
 
-AUTOTUNE = tf.data.AUTOTUNE #Tunes values dynamically at runtime
+    #Converts the image paths stored in the dataset to the arrays associated with the images
+    train_ds = Train.map(process_path, num_parallel_calls=AUTOTUNE)
+    val_ds = Val.map(process_path, num_parallel_calls=AUTOTUNE)
+    test_ds = dataset_test.map(process_path, num_parallel_calls=AUTOTUNE)
 
-#Converts the image paths stored in the dataset to the arrays associated with the images
-train_ds = Train.map(process_path, num_parallel_calls=AUTOTUNE)
-val_ds = Val.map(process_path, num_parallel_calls=AUTOTUNE)
-test_ds = dataset_test.map(process_path, num_parallel_calls=AUTOTUNE)
-
-#Creates batches of 32 in each dataset
-train_ds = train_ds.batch(32)
-val_ds = val_ds.batch(32)
-test_ds = test_ds.batch(32)
+    #Creates batches of 32 in each dataset
+    train_ds = train_ds.batch(32)
+    val_ds = val_ds.batch(32)
+    test_ds = test_ds.batch(32)
 
 
-#Visualise the data and associated labels
-image_batch, label_batch = next(iter(train_ds))
+    #Visualise the data and associated labels
+    image_batch, label_batch = next(iter(train_ds))
 
-"""
-plt.figure(figsize=(10, 10))
-for i in range(9):
-  ax = plt.subplot(3, 3, i + 1)
-  plt.imshow(image_batch[i].numpy().astype("uint8"))
-  label = label_batch[i]
-  plt.title(str(label_batch[i].numpy()))
-  plt.axis("off")
-plt.savefig("B1dsExample.png")
-"""
+    """
+    plt.figure(figsize=(10, 10))
+    for i in range(9):
+    ax = plt.subplot(3, 3, i + 1)
+    plt.imshow(image_batch[i].numpy().astype("uint8"))
+    label = label_batch[i]
+    plt.title(str(label_batch[i].numpy()))
+    plt.axis("off")
+    plt.savefig("B1dsExample.png")
+    """
 
-#Create callback function to stop training early if network converges (to prevent overfitting)
-early_stop = EarlyStopping(monitor = "val_loss", restore_best_weights=True, patience=5, verbose=1)
-callback = [early_stop]
+    #Create callback function to stop training early if network converges (to prevent overfitting)
+    early_stop = EarlyStopping(monitor = "val_loss", restore_best_weights=True, patience=5, verbose=1)
+    callback = [early_stop]
 
-#Create CNN model and show summary of network
-model = CNNmodel()
-model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
-model.summary()
+    #Create CNN model and show summary of network
+    model = CNNmodel()
+    model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=["accuracy"])
+    model.summary()
 
-#Fit the training data to the model
-history = model.fit(train_ds, epochs=10, validation_data=val_ds, callbacks=callback)
+    #Fit the training data to the model
+    history = model.fit(train_ds, epochs=10, validation_data=val_ds, callbacks=callback)
 
-plt.plot(history.history['accuracy'], label = "Train")
-plt.plot(history.history['val_accuracy'], label = "Valid")
-plt.xlabel("Epoch")
-plt.ylabel("Accuracy")
-plt.legend()
-plt.savefig("B1Acc.png")
-plt.show()
+    """
+    plt.plot(history.history['accuracy'], label = "Train")
+    plt.plot(history.history['val_accuracy'], label = "Valid")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.savefig("B1Acc.png")
+    plt.show()
+    """
 
-#Test the model on the test dataset
-results = model.evaluate(test_ds)
-print("Accuracy of CNN:", results[1])
+    #Test the model on the test dataset
+    results = model.evaluate(test_ds)
+    print("Accuracy of CNN:", results[1])
